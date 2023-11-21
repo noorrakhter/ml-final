@@ -24,6 +24,7 @@ public class DecisionTreeClassifier implements Classifier{
 	private Set<Integer> featureIndices;
 	private DecisionTreeNode decisionTree;
 	private int depthMax = Integer.MAX_VALUE;
+    private double errorThreshold = 0.01;
 	
 	public void train(DataSet data) {
 		if( data.getData().size() == 0 ){
@@ -33,6 +34,7 @@ public class DecisionTreeClassifier implements Classifier{
 		featureMap = data.getFeatureMap();
 		featureIndices = data.getAllFeatureIndices();
 		decisionTree = buildTree(data.getData(), new HashSet<Integer>(), depthMax);
+        pruneTree(decisionTree, data); 
 	}
 	
 	/**
@@ -245,5 +247,50 @@ public class DecisionTreeClassifier implements Classifier{
 			this.majorityCount = majorityCount;
 			this.confidence = confidence;
 		}
-	}	
+	}
+    
+    private void pruneTree(DecisionTreeNode node, DataSet data) {
+        ArrayList<Example> examples = data.getData();
+
+        if (node.isLeaf()) { // base case
+            return;
+        }
+
+        // search tree left and right
+        DecisionTreeNode left = node.getLeft();
+        DecisionTreeNode right = node.getRight();
+
+        pruneTree(left, data);
+        pruneTree(right, data);
+
+        // calc error before prune
+        double prePrune = calculateError(examples);
+
+        // prune
+        node.setLeft(null);
+        node.setRight(null);
+
+        // calc error after prune
+        double postPrune = calculateError(examples);
+
+        double errorCompare = prePrune - postPrune;
+        if (errorCompare <= 0 || errorCompare < errorThreshold) {
+            node.setLeft(left);
+            node.setRight(right);
+        }
+    }
+
+    private double calculateError(ArrayList<Example> examples) {
+        double incorrect = 0;
+
+        for (Example example : examples) {
+            double prediction = classify(example);
+            if (prediction != example.getLabel()) {
+                incorrect++;
+            }
+        }
+
+        return incorrect / examples.size();
+    }
+
 }
