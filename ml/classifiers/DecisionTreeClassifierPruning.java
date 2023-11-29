@@ -36,8 +36,9 @@ public class DecisionTreeClassifierPruning implements Classifier{
 		
 		featureMap = data.getFeatureMap();
 		featureIndices = data.getAllFeatureIndices();
-		decisionTree = buildTree(data.getData(), new HashSet<Integer>(), depthMax);
-        decisionTree = pruneTree(decisionTree, data); 
+        CrossValidationSet cvs = new CrossValidationSet(data, 2);
+		decisionTree = buildTree(cvs.getValidationSet(1).getTrain().getData(), new HashSet<Integer>(), depthMax);
+		decisionTree = pruneTree(decisionTree, null, false, data, cvs); 
 	}
 	
 	/**
@@ -252,40 +253,60 @@ public class DecisionTreeClassifierPruning implements Classifier{
 		}
 	}
     
-	private DecisionTreeNode pruneTree(DecisionTreeNode node, DataSet data) {
+	private DecisionTreeNode pruneTree(DecisionTreeNode node, DecisionTreeNode parent, boolean isLeftChild, DataSet data, CrossValidationSet cvs) {
 		if (node == null || node.isLeaf()) {
 			return node;
 		}
-		 // Recursively prune left and right children and update references
-		 node.setLeft(pruneTree(node.getLeft(), data));
-		 node.setRight(pruneTree(node.getRight(), data));
-	 
-		 CrossValidationSet cvs = new CrossValidationSet(data, 2);
-		 double prePruneError = calculateError(cvs.getValidationSet(0).getTest().getData());
-	 
-		 // Create a temporary leaf node for pruning
-		 DataMajority majority = getMajorityLabel(data.getData());
-		 DecisionTreeNode leafNode = new DecisionTreeNode(majority.majorityLabel, majority.confidence);
-	 
-		 // Temporarily replace node with leafNode for post-prune error calculation
-		 DecisionTreeNode originalNode = new DecisionTreeNode(node.getFeatureIndex());
-		 originalNode.setLeft(node.getLeft());
-		 originalNode.setRight(node.getRight());
-	 
-		 // Replace current node with leafNode
-		 node = leafNode;
-		 double postPruneError = calculateError(cvs.getValidationSet(1).getTest().getData());
-	 
-		 // Determine whether to prune or not
-		 if (postPruneError <= prePruneError) {
-			 // Pruning is beneficial, return the new leaf node
-			 return leafNode;
-		 }
-		  else {
-			 // Pruning is not beneficial, return the original node
-			 return originalNode;
-		 }
-	 }
+	
+		// Recursively prune left and right children
+		pruneTree(node.getLeft(), node, true, data, cvs);
+		pruneTree(node.getRight(), node, false, data, cvs);
+	
+	
+		double prePruneError = calculateError(cvs.getValidationSet(0).getTrain().getData());
+	
+		// Create a temporary leaf node for pruning
+		DataMajority majority = getMajorityLabel(data.getData());
+		DecisionTreeNode leafNode = new DecisionTreeNode(majority.majorityLabel, majority.confidence);
+	
+		// Temporarily modify the tree for post-prune error calculation
+		if (parent != null) {
+			if (isLeftChild) {
+				parent.setLeft(leafNode);
+			} 
+			else {
+				parent.setRight(leafNode);
+			}
+		}
+		 else {
+			// For the root node, modify the root itself
+			decisionTree = leafNode;
+		}
+	
+		double postPruneError = calculateError(cvs.getValidationSet(0).getTest().getData());
+	
+		// Determine whether to prune or not and revert changes if necessary
+		if (postPruneError < prePruneError) {
+			// Pruning is beneficial, keep the new leaf node
+			return leafNode;
+		} 
+		else {
+			// Pruning is not beneficial, revert to the original node
+			if (parent != null) {
+				if (isLeftChild) {
+					parent.setLeft(node);
+				} 
+				else {
+					parent.setRight(node);
+				}
+			} 
+			else {
+				// Revert the root node
+				decisionTree = node;
+			}
+			return node;
+		}
+	}
 
     private double calculateError(ArrayList<Example> examples) {
         double incorrect = 0;
