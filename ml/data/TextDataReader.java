@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import ml.classifiers.DecisionTreeClassifier;
+import ml.classifiers.DecisionTreeClassifierPruning;
 import ml.utils.HashMapCounter;
 
 /**
