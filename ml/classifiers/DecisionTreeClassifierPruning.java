@@ -286,7 +286,7 @@ public class DecisionTreeClassifierPruning implements Classifier{
 		double postPruneError = calculateError(cvs.getValidationSet(0).getTest().getData());
 	
 		// Determine whether to prune or not and revert changes if necessary
-		if (postPruneError < prePruneError) {
+		if (postPruneError <= prePruneError) {
 			// Pruning is beneficial, keep the new leaf node
 			return leafNode;
 		} 
