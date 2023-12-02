@@ -322,7 +322,8 @@ public class DecisionTreeClassifierPruning implements Classifier{
     }
 	public static void main(String[] args) {
   
-        DataSet dataSet = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0); 
+        DataSet dataSet = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2017_Financial_Data_Filled.csv", 0); 
+		DataSet dataset2 = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0);
 		int k = 5; 
 		CrossValidationSet cvs = new CrossValidationSet(dataSet, k);
 		double totalAccuracy = 0;
@@ -369,5 +370,17 @@ public class DecisionTreeClassifierPruning implements Classifier{
 	
 		double averageAccuracy2 = totalAccuracy2 / k;
 		System.out.println("Average Accuracy: " + averageAccuracy2);
+
+		DecisionTreeClassifierPruning comparison = new DecisionTreeClassifierPruning();
+		comparison.train(dataSet);
+		double correct2 = 0;
+		for (Example examples : dataset2.getData()){
+			double predicted = comparison.classify(examples);
+				if (predicted == examples.getLabel()) {
+					correct2++;
+				}
+		}
+		double accuracy2 = correct2/dataset2.getData().size();
+		System.out.println(accuracy2);
 	}
 }
