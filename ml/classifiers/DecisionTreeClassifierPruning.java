@@ -322,7 +322,7 @@ public class DecisionTreeClassifierPruning implements Classifier{
     }
 	public static void main(String[] args) {
   
-        DataSet dataSet = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/titanic.csv", 0); 
+        DataSet dataSet = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0); 
 		int k = 5; 
 		CrossValidationSet cvs = new CrossValidationSet(dataSet, k);
 		double totalAccuracy = 0;
