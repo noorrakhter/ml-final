@@ -12,7 +12,7 @@ public class Experimenter {
     public static void main(String[] args){
      DataSet dataSet = new DataSet("/Users/noorakhter/ml-final/ml/utils/2017_Financial_Data_Filled.csv", 0); 
 		DataSet dataset2 = new DataSet("/Users/noorakhter/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0);
-		int k = 20; 
+		int k = 10; 
 		CrossValidationSet cvs = new CrossValidationSet(dataSet, k);
 		double totalAccuracy = 0;
 	
@@ -32,7 +32,7 @@ public class Experimenter {
 	
 			double accuracy = (double) correct / split.getTest().getData().size();
 			totalAccuracy += accuracy;
-			System.out.println("Accuracy for fold " + (k+1) + ": " + accuracy + " (with pruning)");
+			System.out.println("Accuracy for fold " + (j+1) + ": " + accuracy + " (with pruning)");
 
             System.out.println("Size of tree: " + classifier.calculateDepth());
 		}
@@ -74,7 +74,41 @@ public class Experimenter {
 		double accuracy2 = correct2/dataset2.getData().size();
 		System.out.println(accuracy2);
 
-        // size of tree
+    // Question 4: Do we see overfitting? 
+	for (int j = 0; j < k; j++) {
+			DataSetSplit split = cvs.getValidationSet(j);
+			DecisionTreeClassifier classifier2 = new DecisionTreeClassifier();
+			classifier2.train(split.getTrain());
+			double testAccuracySum = 0; 
+			double trainAccuracySum = 0;
+			DataSetSplit splits = dataSet.split(0.8); 
+			classifier2.train(splits.getTrain());
+			
+			DataSet classify = splits.getTest(); // calculate on testing data
+			double count = 0;
+			for (Example example : classify.getData()){
+				if (example.getLabel() == classifier2.classify(example)){
+					count++;
+				}
+			}
+			double testAccuracy = count / classify.getData().size();
+			testAccuracySum += testAccuracy;
+
+			DataSet trainClassify = splits.getTrain(); // calculate on training data
+			double trainCount = 0;
+			for (Example example : trainClassify.getData()){
+				if (example.getLabel() == classifier2.classify(example)){
+					trainCount++;
+				}
+			}
+			double trainAccuracy = trainCount / trainClassify.getData().size();
+			trainAccuracySum += trainAccuracy;
+
+			System.out.println("Accuracy for fold " + (j+1) + ": " + trainAccuracy);
+			System.out.println("Accuracy for fold " + (j+1) + ": " + testAccuracy);
+		}
+
+
 	}
-}
+	}
 
