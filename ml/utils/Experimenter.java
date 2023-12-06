@@ -10,8 +10,8 @@ import ml.data.Example;
 public class Experimenter {
 
     public static void main(String[] args){
-     DataSet dataSet = new DataSet("/Users/noorakhter/ml-final/ml/utils/2017_Financial_Data_Filled.csv", 0); 
-		DataSet dataset2 = new DataSet("/Users/noorakhter/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0);
+     DataSet dataSet = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2017_Financial_Data_Filled.csv", 0); 
+		DataSet dataset2 = new DataSet("/Users/virenjain/Documents/CS_158/ml-final/ml/utils/2018_Financial_Data_Filled.csv", 0);
 		int k = 10; 
 		CrossValidationSet cvs = new CrossValidationSet(dataSet, k);
 		double totalAccuracy = 0;
@@ -35,6 +35,7 @@ public class Experimenter {
 			System.out.println("Accuracy for fold " + (j+1) + ": " + accuracy + " (with pruning)");
 
             System.out.println("Size of tree: " + classifier.calculateDepth());
+			System.out.println(classifier.toString());
 		}
 	
 		double averageAccuracy = totalAccuracy / k;
@@ -81,10 +82,9 @@ public class Experimenter {
 			classifier2.train(split.getTrain());
 			double testAccuracySum = 0; 
 			double trainAccuracySum = 0;
-			DataSetSplit splits = dataSet.split(0.8); 
-			classifier2.train(splits.getTrain());
+		
 			
-			DataSet classify = splits.getTest(); // calculate on testing data
+			DataSet classify = split.getTest(); // calculate on testing data
 			double count = 0;
 			for (Example example : classify.getData()){
 				if (example.getLabel() == classifier2.classify(example)){
@@ -94,7 +94,7 @@ public class Experimenter {
 			double testAccuracy = count / classify.getData().size();
 			testAccuracySum += testAccuracy;
 
-			DataSet trainClassify = splits.getTrain(); // calculate on training data
+			DataSet trainClassify = split.getTrain(); // calculate on training data
 			double trainCount = 0;
 			for (Example example : trainClassify.getData()){
 				if (example.getLabel() == classifier2.classify(example)){
@@ -108,7 +108,37 @@ public class Experimenter {
 			System.out.println("Accuracy for fold " + (j+1) + ": " + testAccuracy);
 		}
 
+		double startThreshold = 0.0;
+        double endThreshold = 0.1;
+        double step = 0.01;
 
+        
+		for (double threshold = startThreshold; threshold <= endThreshold; threshold += step) {
+            int x = 10; 
+            CrossValidationSet cvset = new CrossValidationSet(dataSet, x);
+            double totAcc = 0;
+
+            for (int j = 0; j < x; j++) {
+                DataSetSplit split = cvset.getValidationSet(j);
+                DecisionTreeClassifierPruning classifier = new DecisionTreeClassifierPruning();
+                classifier.setErrorThreshold(threshold); 
+                classifier.train(split.getTrain());
+
+                int correct = 0;
+                for (Example example : split.getTest().getData()) {
+                    double predicted = classifier.classify(example);
+                    if (predicted == example.getLabel()) {
+                        correct++;
+                    }
+                }
+
+                double accuracy = (double) correct / split.getTest().getData().size();
+                totAcc += accuracy;
+            }
+
+            double aveAcc = totAcc / x;
+            System.out.println("Average Accuracy with threshold " + threshold + ": " + aveAcc);
+        }
 	}
 	}
 

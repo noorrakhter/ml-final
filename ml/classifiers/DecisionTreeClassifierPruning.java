@@ -29,7 +29,7 @@ public class DecisionTreeClassifierPruning implements Classifier{
 	private Set<Integer> featureIndices;
 	private DecisionTreeNode decisionTree;
 	private int depthMax = Integer.MAX_VALUE;
-    private double errorThreshold = 0.01;
+    private double errorThreshold = 0.0;
 	
 	public void train(DataSet data) {
 		if( data.getData().size() == 0 ){
@@ -255,6 +255,11 @@ public class DecisionTreeClassifierPruning implements Classifier{
 		}
 	}
     
+	public void setErrorThreshold(Double error){
+		this.errorThreshold = error;
+	}
+
+	
 	private DecisionTreeNode pruneTree(DecisionTreeNode node, DecisionTreeNode parent, boolean isLeftChild, DataSet data, CrossValidationSet cvs) {
 		if (node == null || node.isLeaf()) {
 			return node;
@@ -288,7 +293,7 @@ public class DecisionTreeClassifierPruning implements Classifier{
 		double postPruneError = calculateError(cvs.getValidationSet(0).getTest().getData());
 	
 		// Determine whether to prune or not and revert changes if necessary
-		if (postPruneError <= prePruneError) {
+		if (postPruneError - prePruneError <= errorThreshold) {
 			// Pruning is beneficial, keep the new leaf node
 			return leafNode;
 		} 
